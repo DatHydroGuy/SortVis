@@ -1,7 +1,11 @@
 # SortVis
 Visualisation of sorting algorithms
 
+## Description
 Creates an array of 10 random noon-repeating integers, and applies a sorting algorithm to them, capturing the state of the array at every step, and visualising the results in a way which allows the user to single-step through each stage.
+
+### Requirements
+PyGame >= 1.9.6
 
 ### Currently implemented
 Bubble Sort
