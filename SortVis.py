@@ -14,7 +14,7 @@ from ShellSort import ShellSort
 
 
 WIDTH = 1200
-HEIGHT = 800
+HEIGHT = 700
 NUM_ELEMENTS = 10
 POINT_RADIUS = 80 // NUM_ELEMENTS
 FPS = 60
@@ -63,8 +63,27 @@ def trace_element_through_generations(generations, element, x_spacing, y_spacing
     for i, generation in enumerate(generations[1: -1]):
         element_index = generation.index(element)
         xs.append(int(x_spacing * (i + 2)))
-        ys.append(int(y_spacing * (element_index + 1)))
+        ys.append(int(y_spacing * (element_index + 1.5)))
     return xs, ys
+
+
+def switch_algorithm(callback):
+    unsorted = []
+    while len(unsorted) < NUM_ELEMENTS:
+        r = randint(-100, 100)
+        if r not in unsorted:
+            unsorted.append(r)
+    s = callback()
+    s.sort(unsorted)
+    generations = s.generations
+    pygame.display.set_caption(f'Visualise Sorting Algorithms - {s.name}')
+    # Calculate some values to display the results
+    num_generations = len(generations)
+    x_spacing = WIDTH / (num_generations + 1)
+    curves = calculate_curves(unsorted, generations, x_spacing, HEIGHT / (len(unsorted) + 1))
+    curr_x = curves[0]['x'][0]
+    curr_gen = 1
+    return curr_gen, curr_x, curves, generations, unsorted, x_spacing
 
 
 def main():
@@ -75,43 +94,11 @@ def main():
     # Initialise pygame
     fps_clock = pygame.time.Clock()
 
-    # Setup unsorted data
-    unsorted = []
-    for i in range(NUM_ELEMENTS):
-        r = randint(-100, 100)
-        if r not in unsorted:
-            unsorted.append(r)
-    # unsorted = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]  # Can be interesting to see sometimes
-    # unsorted = [7, 3, 3]  # <== Need to find a way to visualise arrays with repeating elements
-    num_elems = len(unsorted)
-    colour_map = generate_colour_map(num_elems)
+    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(BubbleSort)
 
-    # Pick an algorithm!
-    s = BubbleSort()
-    s.sort(unsorted)
-    generations = s.generations
-    pygame.display.set_caption(f'Visualise Sorting Algorithms - {s.name}')
-
-    # Calculate some values to display the results
-    num_generations = len(generations)
+    y_spacing = HEIGHT / (len(unsorted) + 1)
+    colour_map = generate_colour_map(len(unsorted))
     curr_gen = 1
-    x_spacing = WIDTH / (num_generations + 1)
-    y_spacing = HEIGHT / (num_elems + 1)
-
-    # Calculate curves - these are based on Cosine curves between each point
-    curves = []
-    for i, elem in enumerate(unsorted):
-        coords = trace_element_through_generations(generations, elem, x_spacing, y_spacing)
-        temp = {'x': coords[0], 'y': coords[1], 'curve_x': [], 'curve_y': []}
-        for j in range(len(temp['x']) - 1):
-            x_diff = temp['x'][j + 1] - temp['x'][j]
-            y_diff = temp['y'][j + 1] - temp['y'][j]
-            temp['curve_x'].extend([temp['x'][j] + k for k in range(x_diff + 1)])
-            temp['curve_y'].extend([int(temp['y'][j] + y_diff * 0.5 - y_diff * 0.5 * cos(pi * k / x_diff))
-                                    for k in range(x_diff + 1)])
-        curves.append(temp)
-
-    curr_x = curves[0]['x'][0]
 
     while True:
         screen.fill(BLACK)
@@ -133,6 +120,22 @@ def main():
                     curr_gen = min(len(generations) - 2, curr_gen + 1)
                     if curr_gen == len(generations) - 2:
                         curr_gen += 1
+                elif event.key == pygame.K_1:
+                    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(BubbleSort)
+                elif event.key == pygame.K_2:
+                    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(CountSort)
+                elif event.key == pygame.K_3:
+                    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(HeapSort)
+                elif event.key == pygame.K_4:
+                    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(InsertionSort)
+                elif event.key == pygame.K_5:
+                    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(MergeSort)
+                elif event.key == pygame.K_6:
+                    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(QuickSort)
+                elif event.key == pygame.K_7:
+                    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(SelectionSort)
+                elif event.key == pygame.K_8:
+                    curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(ShellSort)
 
         # Draw the curves first
         if curr_gen - 1 == len(curves[0]['x']):
@@ -159,14 +162,27 @@ def main():
         for g, generation in enumerate(generations):
             if int(x_spacing * (g + 1)) <= curr_x + TOLERANCE:
                 for e, element in enumerate(generation):
+                    gen_x = g + 2 if g + 2 == len(generations) else g + 1
                     pygame.draw.circle(screen, colour_map[unsorted.index(element)],
-                                       (int(x_spacing * (g + 1)), int(y_spacing * (e + 1))), POINT_RADIUS)
-                    if g + 2 == len(generations):
-                        pygame.draw.circle(screen, colour_map[unsorted.index(element)],
-                                           (int(x_spacing * (g + 2)), int(y_spacing * (e + 1))), POINT_RADIUS)
+                                       (int(x_spacing * gen_x), int(y_spacing * (e + 1.5))), POINT_RADIUS)
 
         pygame.display.update()
         fps_clock.tick(FPS)
+
+
+def calculate_curves(unsorted, generations, x_spacing, y_spacing):
+    curves = []
+    for i, elem in enumerate(unsorted):
+        coords = trace_element_through_generations(generations, elem, x_spacing, y_spacing)
+        temp = {'x': coords[0], 'y': coords[1], 'curve_x': [], 'curve_y': []}
+        for j in range(len(temp['x']) - 1):
+            x_diff = temp['x'][j + 1] - temp['x'][j]
+            y_diff = temp['y'][j + 1] - temp['y'][j]
+            temp['curve_x'].extend([temp['x'][j] + k for k in range(x_diff + 1)])
+            temp['curve_y'].extend([int(temp['y'][j] + y_diff * 0.5 - y_diff * 0.5 * cos(pi * k / x_diff))
+                                    for k in range(x_diff + 1)])
+        curves.append(temp)
+    return curves
 
 
 if __name__ == '__main__':
