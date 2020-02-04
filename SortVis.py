@@ -210,7 +210,7 @@ def main():
             elif event.type == ALGORITHM_EVENT and mouse_ready is True:
                 curr_gen, curr_x, curves, generations, unsorted, x_spacing = switch_algorithm(event.callback)
                 mouse_ready = False
-            elif event.type == BUTTON_EVENT:# and mouse_ready is True:
+            elif event.type == BUTTON_EVENT:  # and mouse_ready is True:
                 if event.name == '<':
                     curr_gen = prev_generation(curr_gen, len(generations))
                 elif event.name == '>':
